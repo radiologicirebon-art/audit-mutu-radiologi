@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Audit Mutu Foto Thoraks</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f4f6f9;
+  margin:0;
+}
+header{
+  background:#0d6efd;
+  color:white;
+  padding:15px;
+  text-align:center;
+}
+nav{
+  display:flex;
+  background:#ffffff;
+  border-bottom:1px solid #ddd;
+}
+nav button{
+  flex:1;
+  padding:12px;
+  border:none;
+  background:#fff;
+  cursor:pointer;
+  font-weight:bold;
+}
+nav button.active{
+  background:#0d6efd;
+  color:white;
+}
+section{
+  padding:15px;
+}
+.card{
+  background:white;
+  padding:15px;
+  border-radius:6px;
+  margin-bottom:15px;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+table th, table td{
+  border:1px solid #ddd;
+  padding:8px;
+  text-align:center;
+}
+table th{
+  background:#f0f0f0;
+}
+input, textarea, select{
+  width:100%;
+  padding:6px;
+  margin-top:4px;
+}
+.checkbox-grid td{
+  width:50%;
+}
+button.submit{
+  background:#198754;
+  color:white;
+  border:none;
+  padding:12px;
+  width:100%;
+  font-size:16px;
+  border-radius:6px;
+  cursor:pointer;
+}
+.stat{
+  display:flex;
+  gap:10px;
+}
+.stat div{
+  flex:1;
+  background:white;
+  padding:15px;
+  border-radius:6px;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>AUDIT MUTU FOTO THORAKS</h2>
+</header>
+
+<nav>
+<button class="active" onclick="showTab('input')">📝 Input Audit</button>
+<button onclick="showTab('dashboard')">📊 Dashboard Mutu</button>
+</nav>
+
+<!-- ================= INPUT ================= -->
+<section id="input">
+
+<form id="auditForm">
+
+<div class="card">
+<h3>A. Identitas Pemeriksaan</h3>
+
+<label>Tanggal Pemeriksaan</label>
+<input type="date" id="tanggal" required>
+
+<label>No. Rekam Medis</label>
+<input type="text" id="rm" required>
+
+<label>Nama Pasien</label>
+<input type="text" id="nama" required>
+
+<label>Umur / Jenis Kelamin</label>
+<input type="text" id="umurjk" placeholder="45 th / L" required>
+
+<label>Proyeksi</label>
+<select id="proyeksi" required>
+<option value="">-- pilih --</option>
+<option>PA</option>
+<option>AP</option>
+</select>
+
+<label>Indikasi</label>
+<textarea id="indikasi"></textarea>
+
+<label>Radiografer</label>
+<input type="text" id="radiografer" required>
+
+<label>Unit Pengirim</label>
+<input type="text" id="unit" placeholder="IGD / RI / RJ">
+</div>
+
+<div class="card">
+<h3>B. Penilaian Teknis</h3>
+
+<script>
+function grid(name, items){
+  document.write('<table class="checkbox-grid">');
+  document.write('<tr><th>Kriteria</th><th>Ya</th><th>Tidak</th></tr>');
+  items.forEach(i=>{
+    document.write(`<tr>
+    <td>${i}</td>
+    <td><input type="radio" name="${name+i}" value="Ya" required></td>
+    <td><input type="radio" name="${name+i}" value="Tidak" required></td>
+    </tr>`);
+  });
+  document.write('</table><br>');
+}
+</script>
+
+<strong>1. Posisi & Rotasi</strong>
+<script>
+grid("posisi",[
+"Proyeksi sesuai indikasi",
+"Tidak ada rotasi",
+"Klavikula simetris",
+"Skapula keluar lapang paru"
+]);
+</script>
+
+<strong>2. Inspirasi</strong>
+<script>
+grid("insp",[
+"Inspirasi adekuat",
+"≥10 iga posterior terlihat",
+"Paru mengembang optimal"
+]);
+</script>
+
+<strong>3. Exposure</strong>
+<script>
+grid("expo",[
+"Vertebra torakal tampak samar",
+"Marking vaskular jelas",
+"Tidak under-exposed",
+"Tidak over-exposed",
+"Detail tulang terlihat"
+]);
+</script>
+
+<strong>4. Cakupan Anatomi</strong>
+<script>
+grid("anatomi",[
+"Apeks paru masuk",
+"Costophrenicus terlihat",
+"Dinding toraks lateral masuk"
+]);
+</script>
+
+<strong>5. Ketajaman & Artefak</strong>
+<script>
+grid("artefak",[
+"Tidak ada motion",
+"Batas jantung jelas",
+"Tidak ada artefak",
+"Marker R/L benar"
+]);
+</script>
+
+</div>
+
+<div class="card">
+<h3>C. Kesimpulan</h3>
+<select id="kesimpulan" required>
+<option value="">-- pilih --</option>
+<option>Mutu baik</option>
+<option>Mutu cukup</option>
+<option>Mutu kurang</option>
+</select>
+
+<h3>D. Tindak Lanjut</h3>
+<label><input type="checkbox" value="Edukasi pasien"> Edukasi pasien</label><br>
+<label><input type="checkbox" value="Perbaikan teknik"> Perbaikan teknik</label><br>
+<label><input type="checkbox" value="Pengulangan foto"> Pengulangan foto</label><br>
+<input type="text" id="lainnya" placeholder="Lainnya">
+
+<h3>E. Validasi</h3>
+<label>Radiolog / DPJP</label>
+<input type="text" id="radiolog">
+
+<label>Tanggal Evaluasi</label>
+<input type="date" id="tglEval">
+
+<label>Catatan Laporan</label>
+<textarea id="catatan"></textarea>
+</div>
+
+<button class="submit" type="submit">💾 Simpan Audit</button>
+
+</form>
+</section>
+
+<!-- ================= DASHBOARD ================= -->
+<section id="dashboard" style="display:none">
+
+<div class="stat">
+<div><h3 id="total">0</h3>Total Audit</div>
+<div><h3 id="baik">0</h3>Mutu Baik</div>
+<div><h3 id="cukup">0</h3>Mutu Cukup</div>
+<div><h3 id="kurang">0</h3>Mutu Kurang</div>
+</div>
+
+<div class="card">
+<h3>Data Audit</h3>
+<table id="table">
+<tr>
+<th>Tanggal</th>
+<th>RM</th>
+<th>Pasien</th>
+<th>Proyeksi</th>
+<th>Kesimpulan</th>
+</tr>
+</table>
+</div>
+
+</section>
+
+<script>
+// TAB
+function showTab(tab){
+  document.getElementById("input").style.display = tab==="input"?"block":"none";
+  document.getElementById("dashboard").style.display = tab==="dashboard"?"block":"none";
+  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+  event.target.classList.add("active");
+}
+
+// FIREBASE
+firebase.initializeApp({
+  databaseURL: "https://auditmutu-radiologi-default-rtdb.asia-southeast1.firebasedatabase.app/"
+});
+const db = firebase.database();
+
+// SAVE
+document.getElementById("auditForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const data={
+    tanggal: tanggal.value,
+    rm: rm.value,
+    nama: nama.value,
+    proyeksi: proyeksi.value,
+    kesimpulan: kesimpulan.value
+  };
+  db.ref("audit").push(data);
+  alert("Audit tersimpan");
+  e.target.reset();
+});
+
+// DASHBOARD
+db.ref("audit").on("value",snap=>{
+  let total=0, baik=0, cukup=0, kurang=0;
+  table.innerHTML = `<tr>
+<th>Tanggal</th><th>RM</th><th>Pasien</th><th>Proyeksi</th><th>Kesimpulan</th>
+</tr>`;
+  snap.forEach(s=>{
+    total++;
+    if(s.val().kesimpulan==="Mutu baik") baik++;
+    if(s.val().kesimpulan==="Mutu cukup") cukup++;
+    if(s.val().kesimpulan==="Mutu kurang") kurang++;
+    table.innerHTML+=`<tr>
+<td>${s.val().tanggal}</td>
+<td>${s.val().rm}</td>
+<td>${s.val().nama}</td>
+<td>${s.val().proyeksi}</td>
+<td>${s.val().kesimpulan}</td>
+</tr>`;
+  });
+  total.innerText=total;
+  baik.innerText=baik;
+  cukup.innerText=cukup;
+  kurang.innerText=kurang;
+});
+</script>
+
+</body>
+</html>
