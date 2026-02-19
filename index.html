@@ -39,37 +39,44 @@ button.submit{background:#198754;color:white;border:none;padding:12px;width:100%
 <button onclick="showTab('dashboard',this)">📊 Dashboard Mutu</button>
 </nav>
 
-<!-- ================= INPUT ================= -->
 <section id="input">
 <form id="auditForm">
 
 <div class="card">
 <h3>A. Identitas Pemeriksaan</h3>
 
-<label>Tanggal Pemeriksaan</label>
-<input type="date" id="tanggal" required>
+<label>Pasien</label>
+<input type="text" id="pasien" required>
 
-<label>No. Rekam Medis</label>
-<input type="text" id="rm" required>
-
-<label>Nama Pasien</label>
-<input type="text" id="nama" required>
-
-<label>Proyeksi</label>
-<select id="proyeksi" required>
-<option value="">-- pilih --</option>
-<option>PA</option>
-<option>AP</option>
-</select>
-
-<label>Indikasi</label>
-<textarea id="indikasi"></textarea>
+<label>Tanggal Lahir</label>
+<input type="date" id="tgl_lahir" required>
 
 <label>Radiografer</label>
-<input type="text" id="radiografer" required>
-
-<label>Unit Pengirim</label>
-<input type="text" id="unit">
+<select id="radiografer" required>
+<option value="">-- pilih --</option>
+<option>Ino Hadiwinata, A.Md.Rad</option>
+<option>Lalan Permana Herlambang, A.Md.Rad</option>
+<option>Feby Fardianto, A.Md.Rad</option>
+<option>Elis Mandalasari, A.Md.Rad</option>
+<option>Argo Nur Pujianto</option>
+<option>Tikha Kania, A.Md.Rad</option>
+<option>Ipu Yoga Pradetza, A.Md.Rad</option>
+<option>Sri Cahyati, A.Md.Rad</option>
+<option>Opan Sopandi, A.Md.Rad</option>
+<option>Mohamad Vinggih Hernanda, A.Md.Rad</option>
+<option>Fahmi Puja Ashri, A.Md.Rad</option>
+<option>Gilang Nurgianti Fadilah, A.Md.Rad</option>
+<option>Ardi Pratama Oktafiansyah, A.Md.Rad</option>
+<option>Zhafira Nur Hasanah, A.Md.Rad</option>
+<option>Dwi Alfi Pramesti, A.Md.Rad</option>
+<option>Rita Riana, A.Md.Rad</option>
+<option>Muhammad Rizky Maulana, A. Md. Kes.</option>
+<option>Muhammad Rafi Azhar, A. Md. Kes</option>
+<option>Dias Riyandi, A.Md. Kes</option>
+<option>Mochamad Taufik H, A.Md. Kes</option>
+<option>Arief Maulana, A.Md. Kes</option>
+<option>Salsa Dea Charira, A.Md. Kes</option>
+</select>
 </div>
 
 <div class="card">
@@ -139,7 +146,6 @@ grid("artefak",[
 "Marker R/L benar"
 ]);
 </script>
-
 </div>
 
 <div class="card">
@@ -153,32 +159,24 @@ grid("artefak",[
 </div>
 
 <button class="submit">💾 Simpan Audit</button>
-
 </form>
 </section>
 
-<!-- ================= DASHBOARD ================= -->
 <section id="dashboard" style="display:none">
-
 <div class="stat">
 <div><h3 id="total">0</h3>Total Audit</div>
 <div><h3 id="baik">0</h3>Mutu Baik</div>
 <div><h3 id="cukup">0</h3>Mutu Cukup</div>
 <div><h3 id="kurang">0</h3>Mutu Kurang</div>
 </div>
-
 <button class="printBtn" onclick="printDashboard()">🖨 Print Semua Data</button>
-
 <div class="card">
 <h3>Data Audit</h3>
 <table id="table"></table>
 </div>
-
 </section>
 
 <script>
-
-// TAB
 function showTab(tab,btn){
   document.getElementById("input").style.display = tab==="input"?"block":"none";
   document.getElementById("dashboard").style.display = tab==="dashboard"?"block":"none";
@@ -186,25 +184,23 @@ function showTab(tab,btn){
   btn.classList.add("active");
 }
 
-// FIREBASE
 firebase.initializeApp({
   databaseURL:"https://auditmutu-radiologi-default-rtdb.asia-southeast1.firebasedatabase.app/"
 });
 const db = firebase.database();
 
-// SAVE (lengkap)
 auditForm.addEventListener("submit",e=>{
   e.preventDefault();
 
+  const penilaian={};
+  document.querySelectorAll('input[type=radio]:checked').forEach(r=>penilaian[r.name]=r.value);
+
   db.ref("audit").push({
-    tanggal:tanggal.value,
-    rm:rm.value,
-    nama:nama.value,
-    proyeksi:proyeksi.value,
-    indikasi:indikasi.value,
+    pasien:pasien.value,
+    tgl_lahir:tgl_lahir.value,
     radiografer:radiografer.value,
-    unit:unit.value,
     kesimpulan:kesimpulan.value,
+    penilaian:penilaian,
     created:Date.now()
   }).then(()=>{
     alert("Audit tersimpan");
@@ -212,17 +208,14 @@ auditForm.addEventListener("submit",e=>{
   });
 });
 
-// DASHBOARD
 db.ref("audit").on("value",snap=>{
   let t=0,b=0,c=0,k=0;
 
   table.innerHTML=`<tr>
-  <th>Tanggal</th>
-  <th>RM</th>
   <th>Pasien</th>
-  <th>Proyeksi</th>
+  <th>Tgl Lahir</th>
+  <th>Radiografer</th>
   <th>Kesimpulan</th>
-  <th>Tools</th>
   </tr>`;
 
   snap.forEach(s=>{
@@ -232,19 +225,11 @@ db.ref("audit").on("value",snap=>{
     if(d.kesimpulan==="Mutu cukup") c++;
     if(d.kesimpulan==="Mutu kurang") k++;
 
-    table.innerHTML+=`
-    <tr>
-      <td>${d.tanggal}</td>
-      <td>${d.rm}</td>
-      <td>${d.nama}</td>
-      <td>${d.proyeksi}</td>
+    table.innerHTML+=`<tr>
+      <td>${d.pasien}</td>
+      <td>${d.tgl_lahir}</td>
+      <td>${d.radiografer}</td>
       <td>${d.kesimpulan}</td>
-      <td>
-        <button class="smallBtn"
-        onclick="printSingleAudit('${d.tanggal}','${d.rm}','${d.nama}','${d.proyeksi}','${d.kesimpulan}','${d.radiografer}')">
-        PRINT BUKTI AUDIT
-        </button>
-      </td>
     </tr>`;
   });
 
@@ -253,32 +238,6 @@ db.ref("audit").on("value",snap=>{
   cukup.textContent=c;
   kurang.textContent=k;
 });
-
-// PRINT SINGLE
-function printSingleAudit(tanggal,rm,nama,proyeksi,kesimpulan,radiografer){
-  let html=`
-  <html><body style="font-family:Arial;padding:30px">
-  <h2 style="text-align:center">BUKTI AUDIT MUTU FOTO THORAKS</h2>
-  <table border="1" width="100%" cellpadding="8" cellspacing="0">
-  <tr><td>Tanggal</td><td>${tanggal}</td></tr>
-  <tr><td>No RM</td><td>${rm}</td></tr>
-  <tr><td>Nama</td><td>${nama}</td></tr>
-  <tr><td>Proyeksi</td><td>${proyeksi}</td></tr>
-  <tr><td>Kesimpulan</td><td><b>${kesimpulan}</b></td></tr>
-  <tr><td>Radiografer</td><td>${radiografer}</td></tr>
-  </table>
-  <br><br>
-  Cirebon, ${new Date().toLocaleDateString()}<br><br><br>
-  ___________________________<br>
-  Radiografer
-  </body></html>`;
-
-  let win=window.open("","","width=800,height=600");
-  win.document.write(html);
-  win.document.close();
-  win.print();
-}
 </script>
-
 </body>
 </html>
