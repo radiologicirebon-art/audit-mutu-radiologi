@@ -114,7 +114,7 @@ const box=document.getElementById('penilaianBox');
 let html='<h3>B. Penilaian Teknis</h3>';
 Object.entries(kriteria).forEach(([judul,list])=>{
  html+=`<b>${judul}</b><table><tr><th>Kriteria</th><th>Ya</th><th>Tidak</th></tr>`;
- list.forEach(i=>html+=`<tr><td>${i}</td><td><input type='radio' name='${i}' value='Ya' required></td><td><input type='radio' name='${i}' value='Tidak' required></td></tr>`);
+ list.forEach((i,idx)=>{const key=(judul+'_'+idx).replace(/[^a-zA-Z0-9_]/g,'_'); html+=`<tr><td>${i}</td><td><input type='radio' data-label='${i}' name='${key}' value='Ya' required></td><td><input type='radio' data-label='${i}' name='${key}' value='Tidak' required></td></tr>`});
  html+='</table><br>';
 });
 box.innerHTML=html;
@@ -127,7 +127,7 @@ function kesimpulan(score){return score>=80?'Mutu baik':score>=60?'Mutu cukup':'
 document.getElementById('auditForm').addEventListener('submit',e=>{
  e.preventDefault();
  let total=0,ya=0,detail={};
- document.querySelectorAll("input[type=radio]:checked").forEach(r=>{total++;if(r.value==='Ya')ya++;detail[r.name]=r.value});
+ document.querySelectorAll("input[type=radio]:checked").forEach(r=>{total++;if(r.value==='Ya')ya++;detail[r.name]={label:r.dataset.label,value:r.value};});
  const score=Math.round((ya/total)*100);
  db.ref('audit').push({pasien:pasien.value,tgl_lahir:tgl_lahir.value,radiografer:radiografer.value,score:score,kesimpulan:kesimpulan(score),detail:detail});
  alert('Tersimpan | '+score+'%');
