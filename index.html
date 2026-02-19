@@ -7,6 +7,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body{font-family:Arial,sans-serif;background:#f4f6f9;margin:0}
@@ -23,34 +24,27 @@ input,textarea,select{width:100%;padding:6px;margin-top:4px}
 button.submit{background:#198754;color:white;border:none;padding:12px;width:100%;font-size:16px;border-radius:6px;cursor:pointer}
 .stat{display:flex;gap:10px}
 .stat div{flex:1;background:white;padding:15px;border-radius:6px;text-align:center}
-.printBtn{background:#0d6efd;color:white;border:none;padding:10px 15px;border-radius:6px;cursor:pointer;margin-bottom:10px}
 .smallBtn{background:#198754;color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer}
 </style>
 </head>
 
 <body>
-
-<header>
-<h2>AUDIT MUTU FOTO THORAKS</h2>
-</header>
+<header><h2>AUDIT MUTU FOTO THORAKS</h2></header>
 
 <nav>
 <button class="active" onclick="showTab('input',this)">📝 Input Audit</button>
 <button onclick="showTab('dashboard',this)">📊 Dashboard Mutu</button>
 </nav>
 
+<!-- INPUT -->
 <section id="input">
 <form id="auditForm">
-
 <div class="card">
 <h3>A. Identitas Pemeriksaan</h3>
-
 <label>Pasien</label>
 <input type="text" id="pasien" required>
-
 <label>Tanggal Lahir</label>
 <input type="date" id="tgl_lahir" required>
-
 <label>Radiografer</label>
 <select id="radiografer" required>
 <option value="">-- pilih --</option>
@@ -79,164 +73,77 @@ button.submit{background:#198754;color:white;border:none;padding:12px;width:100%
 </select>
 </div>
 
-<div class="card">
-<h3>B. Penilaian Teknis</h3>
-
-<script>
-function grid(name,items){
-  document.write('<table>');
-  document.write('<tr><th>Kriteria</th><th>Ya</th><th>Tidak</th></tr>');
-  items.forEach(i=>{
-    document.write(`
-    <tr>
-      <td>${i}</td>
-      <td><input type="radio" name="${name+i}" value="Ya" required></td>
-      <td><input type="radio" name="${name+i}" value="Tidak" required></td>
-    </tr>`);
-  });
-  document.write('</table><br>');
-}
-</script>
-
-<strong>1. Posisi & Rotasi</strong>
-<script>
-grid("posisi",[
-"Proyeksi sesuai indikasi",
-"Tidak ada rotasi",
-"Klavikula simetris",
-"Skapula keluar lapang paru"
-]);
-</script>
-
-<strong>2. Inspirasi</strong>
-<script>
-grid("insp",[
-"Inspirasi adekuat",
-"≥10 iga posterior terlihat",
-"Paru mengembang optimal"
-]);
-</script>
-
-<strong>3. Exposure</strong>
-<script>
-grid("expo",[
-"Vertebra torakal tampak samar",
-"Marking vaskular jelas",
-"Tidak under-exposed",
-"Tidak over-exposed",
-"Detail tulang terlihat"
-]);
-</script>
-
-<strong>4. Cakupan Anatomi</strong>
-<script>
-grid("anatomi",[
-"Apeks paru masuk",
-"Costophrenicus terlihat",
-"Dinding toraks lateral masuk"
-]);
-</script>
-
-<strong>5. Ketajaman & Artefak</strong>
-<script>
-grid("artefak",[
-"Tidak ada motion",
-"Batas jantung jelas",
-"Tidak ada artefak",
-"Marker R/L benar"
-]);
-</script>
-</div>
-
-<div class="card">
-<h3>C. Kesimpulan</h3>
-<select id="kesimpulan" required>
-<option value="">-- pilih --</option>
-<option>Mutu baik</option>
-<option>Mutu cukup</option>
-<option>Mutu kurang</option>
-</select>
-</div>
-
+<div class="card" id="penilaianBox"></div>
 <button class="submit">💾 Simpan Audit</button>
 </form>
 </section>
 
+<!-- DASHBOARD -->
 <section id="dashboard" style="display:none">
 <div class="stat">
-<div><h3 id="total">0</h3>Total Audit</div>
-<div><h3 id="baik">0</h3>Mutu Baik</div>
-<div><h3 id="cukup">0</h3>Mutu Cukup</div>
-<div><h3 id="kurang">0</h3>Mutu Kurang</div>
+<div><h3 id="total">0</h3>Total</div>
+<div><h3 id="baik">0</h3>Baik</div>
+<div><h3 id="cukup">0</h3>Cukup</div>
+<div><h3 id="kurang">0</h3>Kurang</div>
 </div>
-<button class="printBtn" onclick="printDashboard()">🖨 Print Semua Data</button>
+
 <div class="card">
-<h3>Data Audit</h3>
 <table id="table"></table>
 </div>
+<canvas id="chart"></canvas>
 </section>
 
 <script>
 function showTab(tab,btn){
-  document.getElementById("input").style.display = tab==="input"?"block":"none";
-  document.getElementById("dashboard").style.display = tab==="dashboard"?"block":"none";
+  document.getElementById("input").style.display = tab==='input'?'block':'none';
+  document.getElementById("dashboard").style.display = tab==='dashboard'?'block':'none';
   document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
 }
 
-firebase.initializeApp({
-  databaseURL:"https://auditmutu-radiologi-default-rtdb.asia-southeast1.firebasedatabase.app/"
+// generate checklist
+const kriteria={
+"Posisi & Rotasi":["Proyeksi sesuai indikasi","Tidak ada rotasi","Klavikula simetris","Skapula keluar lapang paru"],
+"Inspirasi":["Inspirasi adekuat","≥10 iga posterior terlihat","Paru mengembang optimal"],
+"Exposure":["Vertebra torakal tampak samar","Marking vaskular jelas","Tidak under-exposed","Tidak over-exposed","Detail tulang terlihat"],
+"Cakupan Anatomi":["Apeks paru masuk","Costophrenicus terlihat","Dinding toraks lateral masuk"],
+"Artefak":["Tidak ada motion","Batas jantung jelas","Tidak ada artefak","Marker R/L benar"]
+};
+
+const box=document.getElementById('penilaianBox');
+let html='<h3>B. Penilaian Teknis</h3>';
+Object.entries(kriteria).forEach(([judul,list])=>{
+ html+=`<b>${judul}</b><table><tr><th>Kriteria</th><th>Ya</th><th>Tidak</th></tr>`;
+ list.forEach(i=>html+=`<tr><td>${i}</td><td><input type='radio' name='${i}' value='Ya' required></td><td><input type='radio' name='${i}' value='Tidak' required></td></tr>`);
+ html+='</table><br>';
 });
-const db = firebase.database();
+box.innerHTML=html;
 
-auditForm.addEventListener("submit",e=>{
-  e.preventDefault();
+firebase.initializeApp({databaseURL:"https://auditmutu-radiologi-default-rtdb.asia-southeast1.firebasedatabase.app/"});
+const db=firebase.database();
 
-  const penilaian={};
-  document.querySelectorAll('input[type=radio]:checked').forEach(r=>penilaian[r.name]=r.value);
+function kesimpulan(score){return score>=80?'Mutu baik':score>=60?'Mutu cukup':'Mutu kurang';}
 
-  db.ref("audit").push({
-    pasien:pasien.value,
-    tgl_lahir:tgl_lahir.value,
-    radiografer:radiografer.value,
-    kesimpulan:kesimpulan.value,
-    penilaian:penilaian,
-    created:Date.now()
-  }).then(()=>{
-    alert("Audit tersimpan");
-    auditForm.reset();
-  });
+document.getElementById('auditForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ let total=0,ya=0,detail={};
+ document.querySelectorAll("input[type=radio]:checked").forEach(r=>{total++;if(r.value==='Ya')ya++;detail[r.name]=r.value});
+ const score=Math.round((ya/total)*100);
+ db.ref('audit').push({pasien:pasien.value,tgl_lahir:tgl_lahir.value,radiografer:radiografer.value,score:score,kesimpulan:kesimpulan(score),detail:detail});
+ alert('Tersimpan | '+score+'%');
+ e.target.reset();
 });
 
-db.ref("audit").on("value",snap=>{
-  let t=0,b=0,c=0,k=0;
-
-  table.innerHTML=`<tr>
-  <th>Pasien</th>
-  <th>Tgl Lahir</th>
-  <th>Radiografer</th>
-  <th>Kesimpulan</th>
-  </tr>`;
-
-  snap.forEach(s=>{
-    let d=s.val();
-    t++;
-    if(d.kesimpulan==="Mutu baik") b++;
-    if(d.kesimpulan==="Mutu cukup") c++;
-    if(d.kesimpulan==="Mutu kurang") k++;
-
-    table.innerHTML+=`<tr>
-      <td>${d.pasien}</td>
-      <td>${d.tgl_lahir}</td>
-      <td>${d.radiografer}</td>
-      <td>${d.kesimpulan}</td>
-    </tr>`;
-  });
-
-  total.textContent=t;
-  baik.textContent=b;
-  cukup.textContent=c;
-  kurang.textContent=k;
+let chart;
+db.ref('audit').on('value',snap=>{
+ let t=0,b=0,c=0,k=0,per={};
+ table.innerHTML='<tr><th>Pasien</th><th>Radiografer</th><th>Score</th><th>Kesimpulan</th></tr>';
+ snap.forEach(s=>{let d=s.val();t++;if(d.kesimpulan==='Mutu baik')b++;if(d.kesimpulan==='Mutu cukup')c++;if(d.kesimpulan==='Mutu kurang')k++;
+ if(!per[d.radiografer])per[d.radiografer]=[];per[d.radiografer].push(d.score);
+ table.innerHTML+=`<tr><td>${d.pasien}</td><td>${d.radiografer}</td><td>${d.score}%</td><td>${d.kesimpulan}</td></tr>`});
+ total.textContent=t;baik.textContent=b;cukup.textContent=c;kurang.textContent=k;
+ const labels=Object.keys(per);const data=labels.map(r=>Math.round(per[r].reduce((a,b)=>a+b,0)/per[r].length));
+ if(chart)chart.destroy();chart=new Chart(document.getElementById('chart'),{type:'bar',data:{labels:labels,datasets:[{label:'Rata-rata Score',data:data}]}});
 });
 </script>
 </body>
