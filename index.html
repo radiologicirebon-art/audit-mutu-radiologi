@@ -126,8 +126,8 @@ function kesimpulan(score){return score>=80?'Mutu baik':score>=60?'Mutu cukup':'
 
 document.getElementById('auditForm').addEventListener('submit',e=>{
  e.preventDefault();
- let total=0,ya=0,detail={};
- document.querySelectorAll("input[type=radio]:checked").forEach(r=>{total++;if(r.value==='Ya')ya++;detail[r.name]={label:r.dataset.label,value:r.value};});
+ let total=0,ya=0,detail=[];
+ document.querySelectorAll("input[type=radio]:checked").forEach(r=>{total++;if(r.value==='Ya')ya++;detail.push({id:r.name,label:r.dataset.label,value:r.value});});
  const score=Math.round((ya/total)*100);
  db.ref('audit').push({pasien:pasien.value,tgl_lahir:tgl_lahir.value,radiografer:radiografer.value,score:score,kesimpulan:kesimpulan(score),detail:detail});
  alert('Tersimpan | '+score+'%');
