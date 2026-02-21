@@ -219,7 +219,9 @@ db.ref('audit').on('value',snap=>{
  table.innerHTML='<tr><th>Pasien</th><th>Radiografer</th><th>Score</th><th>Kesimpulan</th><th>Cetak</th></tr>';
  snap.forEach(s=>{let d=s.val();let key=s.key;t++;if(d.kesimpulan==='Mutu baik')b++;if(d.kesimpulan==='Mutu cukup')c++;if(d.kesimpulan==='Mutu kurang')k++;
  if(!per[d.radiografer])per[d.radiografer]=[];per[d.radiografer].push(d.score);
- table.innerHTML+=`<tr><td>${d.pasien}</td><td>${d.radiografer}</td><td>${d.score}%</td><td>${d.kesimpulan}</td><td><button class="smallBtn" onclick="printAudit('${key}')">🖨 Cetak</button></td></tr>`});
+ const tgl=new Date(d.tanggal_simpan||0).toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'});
+ const jm=new Date(d.tanggal_simpan||0).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',hour12:false});
+ table.innerHTML+=`<tr><td>${d.pasien}</td><td>${d.radiografer}</td><td>${tgl}</td><td>${jm}</td><td>${d.score}%</td><td>${d.kesimpulan}</td><td><button class="smallBtn" onclick="printAudit('${key}')">🖨 Cetak</button></td></tr>`});
  total.textContent=t;baik.textContent=b;cukup.textContent=c;kurang.textContent=k;
  const labels=Object.keys(per);const data=labels.map(r=>Math.round(per[r].reduce((a,b)=>a+b,0)/per[r].length));
  if(chart)chart.destroy();chart=new Chart(document.getElementById('chart'),{type:'bar',data:{labels:labels,datasets:[{label:'Rata-rata Score',data:data}]}});
