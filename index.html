@@ -126,7 +126,7 @@ document.getElementById('auditForm').addEventListener('submit',e=>{
  let total=0,ya=0,detail=[];
  document.querySelectorAll("input[type=radio]:checked").forEach(r=>{total++;if(r.value==='Ya')ya++;detail.push({id:r.name,label:r.dataset.label,value:r.value});});
  const score=Math.round((ya/total)*100);
- db.ref('audit').push({pasien:pasien.value,tgl_lahir:tgl_lahir.value,radiografer:radiografer.value,score:score,kesimpulan:kesimpulan(score),detail:detail});
+ db.ref('audit').push({pasien:pasien.value,tgl_lahir:tgl_lahir.value,radiografer:radiografer.value,score:score,kesimpulan:kesimpulan(score),detail:detail,tanggal_simpan:Date.now()});
  alert('Tersimpan | '+score+'%');
  e.target.reset();
 });
@@ -139,8 +139,9 @@ function printAudit(key){
      detailHTML+=`<tr><td style="padding:4px 8px">${item.label}</td><td style="padding:4px 8px">${item.value}</td></tr>`;
    });
 
-   const today=new Date();
-   const tanggal=today.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+   const tanggalObj=new Date(d.tanggal_simpan||Date.now());
+   const tanggal=tanggalObj.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+   const jam=tanggalObj.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',hour12:false})+' WIB';
 
    const win=window.open('','','width=900,height=700');
    win.document.write(`
@@ -188,7 +189,7 @@ function printAudit(key){
    <table class="ttd">
      <tr>
        <td width="60%"></td>
-       <td>Cirebon, ${tanggal}</td>
+       <td>Cirebon, ${tanggal} ${jam}</td>
      </tr>
      <tr>
        <td></td>
