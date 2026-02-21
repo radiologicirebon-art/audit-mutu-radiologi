@@ -135,31 +135,77 @@ function printAudit(key){
  db.ref('audit/'+key).once('value').then(snap=>{
    const d=snap.val();
    let detailHTML='';
-   d.detail.forEach(item=>{detailHTML+=`<tr><td>${item.label}</td><td style="text-align:center">${item.value}</td></tr>`});
+   d.detail.forEach(item=>{
+     detailHTML+=`<tr><td style="padding:4px 8px">${item.label}</td><td style="padding:4px 8px">${item.value}</td></tr>`;
+   });
+
+   const today=new Date();
+   const tanggal=today.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+
    const win=window.open('','','width=900,height=700');
    win.document.write(`
-   <html><head><title>Bukti Audit</title>
+   <html>
+   <head>
+   <title>Bukti Audit</title>
    <style>
-   body{font-family:Arial;padding:30px}
-   h2{text-align:center;margin-bottom:0}
-   h4{text-align:center;margin-top:5px;color:#555}
-   table{width:100%;border-collapse:collapse;margin-top:20px}
-   th,td{border:1px solid #000;padding:6px}
-   .info td{border:none;padding:4px}
-   .score{font-size:20px;font-weight:bold;text-align:center;margin-top:15px}
-   .footer{margin-top:60px;display:flex;justify-content:space-between}
-   </style></head><body>
+     body{font-family:Arial;padding:40px;color:#000}
+     h2{text-align:center;margin-bottom:0}
+     h4{text-align:center;margin-top:5px;margin-bottom:30px}
+     table{width:100%;border-collapse:collapse}
+     td{vertical-align:top}
+     .info td{padding:4px 8px}
+     .kriteria{margin-top:15px}
+     .kriteria th{border-bottom:1px solid #000;text-align:left;padding:6px 8px}
+     .kriteria td{padding:4px 8px}
+     .score{margin-top:20px;font-weight:bold}
+     .ttd{margin-top:80px;width:100%}
+     .ttd td{text-align:left;padding-top:40px}
+   </style>
+   </head>
+   <body>
+
    <h2>BUKTI AUDIT MUTU FOTO THORAKS</h2>
    <h4>Instalasi Radiologi</h4>
+
    <table class="info">
-   <tr><td>Nama Pasien</td><td>: ${d.pasien}</td></tr>
-   <tr><td>Tanggal Lahir</td><td>: ${d.tgl_lahir}</td></tr>
-   <tr><td>Radiografer</td><td>: ${d.radiografer}</td></tr>
+     <tr><td width="180">Nama Pasien</td><td>: ${d.pasien}</td></tr>
+     <tr><td>Tanggal Lahir</td><td>: ${d.tgl_lahir}</td></tr>
+     <tr><td>Radiografer</td><td>: ${d.radiografer}</td></tr>
    </table>
-   <table><tr><th>Kriteria</th><th>Hasil</th></tr>${detailHTML}</table>
-   <div class="score">SCORE : ${d.score}%<br><b>${d.kesimpulan.toUpperCase()}</b></div>
-   <div class="footer"><div>Mengetahui,<br><br><br>( Dokter Radiologi )</div><div>Pemeriksa,<br><br><br>( ${d.radiografer} )</div></div>
-   </body></html>`);
+
+   <table class="kriteria">
+     <tr><th width="70%">Kriteria</th><th>Hasil</th></tr>
+     ${detailHTML}
+   </table>
+
+   <div class="score">
+     SCORE : ${d.score}%<br>
+     ${d.kesimpulan.toUpperCase()}
+   </div>
+
+   <br><br><br>
+
+   <table class="ttd">
+     <tr>
+       <td width="60%"></td>
+       <td>Cirebon, ${tanggal}</td>
+     </tr>
+     <tr>
+       <td></td>
+       <td>Petugas Audit</td>
+     </tr>
+     <tr>
+       <td></td>
+       <td><br><br><br>
+       Ino Hadiwinata, A.Md.Rad<br>
+       Koordinator Instalasi Radiologi
+       </td>
+     </tr>
+   </table>
+
+   </body>
+   </html>`);
+
    win.document.close();
    win.focus();
    win.print();
